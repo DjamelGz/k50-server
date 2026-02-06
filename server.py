@@ -2,9 +2,11 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Dictionnaire ID → Nom (ici juste Djamel)
+# Dictionnaire ID → Nom (ajoute d'autres utilisateurs si nécessaire)
 users = {
-    "1": "Djamel"
+    "1": "Djamel",
+    # "2": "Sami",
+    # "3": "Leila",
 }
 
 @app.route('/iclock/cdata', methods=['POST'])
@@ -12,6 +14,11 @@ def receive_data():
     data = request.data.decode(errors="ignore").strip()
     if not data:
         return "OK"
+
+    # Filtrer uniquement les vrais pointages
+    table = request.args.get("table")
+    if table != "ATTLOG":
+        return "OK"  # ignorer OPERLOG et autres tables
 
     # Exemple de data reçue : '1\t2026-02-07 07:35:52\t0\t1\t0\t0\t0\t0\t0\t0\t'
     fields = data.split('\t')
@@ -21,7 +28,7 @@ def receive_data():
         name = users.get(user_id, f"Utilisateur {user_id}")
         print(f"Bienvenue {name} ! Heure : {timestamp}")
     else:
-        print(f"Requête reçue mais impossible de parser les données: {data}")
+        print(f"Impossible de parser les données: {data}")
 
     return "OK"
 
@@ -30,7 +37,7 @@ def get_request():
     sn = request.args.get("SN")
     print(f"📤 COMMAND REQUEST from {sn}")
 
-    # On demande au K50 d’envoyer les templates si nécessaire
+    # Demander au K50 d’envoyer les templates si besoin
     command = "DATA QUERY FINGERTMP\n"
     return command
 
